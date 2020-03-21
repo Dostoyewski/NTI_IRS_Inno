@@ -3,12 +3,15 @@ import imutils
 import numpy as np
 from imutils.video import VideoStream
 import time
+import math
 
 vs = VideoStream(src=1).start()
 time.sleep(0.5)
 MIN = 200
 
 DELTA = 7
+
+OFFSET = 0.07
 
 def get_cube_coords():
     frame = vs.read()
@@ -57,3 +60,37 @@ def get_cube_coords():
     cv2.imshow("result", frame)
     key = cv2.waitKey(1) & 0xFF
     return center
+
+def check_existance(obj, coord):
+    eps = 0.05
+    for o in obj:
+        if sqrt((o[0] - coord[0])**2 + (o[1] - coord[1])**2) <= 0.05:
+            return obj.index(o)
+    return False
+
+if __name__ == "__main__":
+    vs = VideoStream(src=1).start()
+    time.sleep(0.5)
+    velocity = 0.2
+    x, y = 0, 0
+    dt = 0.05
+    obj = []
+    h = 0.1
+    f = lambda x: -1100000/9991*x + 938212/9991
+    while True:
+        coords = get_cube_coords()
+        for coord in coords:
+            coord[0] -= 320
+            coord[1] -= 180
+            pic = f(h)
+            coord[0] /= (100*pic)
+            coord[1] = coord[1]/(100*pic) - OFFSET
+            i = check_existance(obj, coord)
+            if not i:
+                obj.append(coord)
+            else:
+                obj[i][0] += coord[0]
+                obj[i][1] += coord[1]
+                obj[i][0] /= 2
+                obj[i][1] /= 2
+    print(obj)
