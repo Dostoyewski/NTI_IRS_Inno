@@ -6,6 +6,10 @@ import urx
 import math
 from time import sleep
 # blending makes trajectory smoother
+
+def calc_transform_coef(h):
+    return -1100000/9991*h + 938212/9991
+
 def movej_cmd(p, blending = 0, vel = 0.2, acc = 0.2):
     return "movej([{},{},{},{},{},{}], a={}, v={}, t=0, r={}) \n".format(p[0], p[1], p[2], p[3], p[4], p[5], acc, vel, blending)
 
