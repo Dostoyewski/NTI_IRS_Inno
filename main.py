@@ -5,37 +5,26 @@
 import urx
 import math
 from time import sleep
-import UR10_Robot
+from UR10_Robot import UR10_Robot
 
 VEL = 0.2
 ACC = 0.2
 RVEL = 0.5
 
-rob = UR10_Robot(ip="172.31.1.3", ACC, ACC, VEL, RVEL)
+rob = UR10_Robot("172.31.1.3", ACC, ACC, VEL, RVEL)
 
 #Положительный y — к основанию
 #положительный x — к машинам (влево от основания)
 #z ok
 
 if __name__ == "__main__":
-    '''rob = urx.Robot("172.31.1.3")
-    print("Connected to UR")
-    rob.translate((-0.1, 0, 0), VEL, ACC)
-    print('Current Pose', rob.get_pose())
-    sleep(5)
-    rob.translate((0, 0, -0.1), VEL, ACC)
-    rob.movej((0, 0, 0, 0, 0, -3.14/2), RVEL, ACC, relative=True)
-    print('Current Pose', rob.get_pose())
-    sleep(5)
-    rob.translate((0, 0, 0.2), VEL, ACC)
-    print('Current Pose', rob.get_pose())
-    sleep(5)
-    rob.movej((0, 0, 0, 0, 0, 3.14/2), RVEL, ACC, relative=True)
-    rob.close()'''
-    sleep(0.5)
-    rob.rtranslate(0.1, 0, 0)
+    '''sleep(0.5)
+    rob.rtranslate(0.1, 0, 0)'''
+    rob.take_object()
     print(rob.get_pose())
-    rob.gr_close()
+    sleep(2)
+    rob.release_object()
+    '''rob.gr_close()
     sleep(2)
     rob.rtranslate(-0.2, -0.1, 0.1)
     rob.gr_open()
@@ -44,5 +33,6 @@ if __name__ == "__main__":
     rob.rrotate(3.14/2)
     sleep(0.5)
     rob.rrotate(-3.14/2)
-    sleep(0.5)
+    sleep(0.5)'''
+    
     rob.shutdown()

@@ -2,8 +2,11 @@ import urx
 import math
 from time import sleep
 
-class UR10_Robot():
-    def __init__(self, ip="172.31.1.3", ac, rac, vel, rvel):
+H0 = 0.2793680869198448
+
+class UR10_Robot:
+
+    def __init__(self, ip, ac, rac, vel, rvel, gr_state=True):
         '''Initialization, connecting to UR10'''
         self.rob = urx.Robot(ip)
         print("Connected to UR")
@@ -12,7 +15,12 @@ class UR10_Robot():
         self.rac = rac
         self.vel = vel
         self.rvel = rvel
-        self.npose = rob.getl()
+        self.npose = self.rob.getl()
+        self.gr_state = gr_state
+
+    def get_gripper_state(self):
+        '''Getter for gripper state'''
+        return self.gr_state
 
     def calc_transform_coef(self):
         '''Get pixels in 1 cm'''
@@ -22,7 +30,7 @@ class UR10_Robot():
 
     def rtranslate(self, x, y, z):
         '''relative translation'''
-        self.rob.translate((x, y, z), self.vel, self.ac, relative=True)
+        self.rob.translate((x, y, z), self.vel, self.ac)
     
     def translate(self, pose):
         '''Global translation'''
@@ -46,6 +54,8 @@ class UR10_Robot():
         prog += 'sleep(0.7)\n'
         prog += end
         self.rob.send_program(prog)
+        print('sended')
+        self.gr_state = !self.gr_state
         sleep(0.5)
 
     def gr_open(self):
@@ -53,12 +63,13 @@ class UR10_Robot():
         header = "def myProg():\n"
         end = "end\n"
         prog = header # first put header into program code 
-        prog = ''
         prog += 'set_tool_digital_out(0, False)\n'
         prog += 'set_tool_digital_out(1, True)\n'
         prog += 'sleep(0.7)\n'
         prog += end
+        print('sended')
         self.rob.send_program(prog)
+        self.gr_state = !self.gr_state
         sleep(0.5)
 
     def get_pose(self):
@@ -69,3 +80,25 @@ class UR10_Robot():
         '''Shutdown robot'''
         self.rob.close()
         print('Robot closed')
+
+    def release_object(self):
+        '''Releasing obj'''
+        coords = self.get_pose()
+        h = coords[2]
+        dh = H0 - h
+        self.rtranslate(0, 0, dh)
+        sleep(0.5)
+        self.gr_open()
+        sleep(0.5)
+        self.rtranslate(0, 0, -dh)
+
+    def take_object(self):
+        '''Take obj from ground'''
+        coords = self.get_pose()
+        h = coords[2]
+        dh = H0 - h
+        self.rtranslate(0, 0, dh)
+        sleep(0.5)
+        self.gr_close()
+        sleep(0.5)
+        self.rtranslate(0, 0, -dh)
