@@ -93,4 +93,5 @@ if __name__ == "__main__":
                 obj[i][1] += coord[1]
                 obj[i][0] /= 2
                 obj[i][1] /= 2
+        x += velocity*dt
     print(obj)
