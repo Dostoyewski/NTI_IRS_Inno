@@ -28,9 +28,6 @@ def translate():
     prog += 'translate((0.1, 0, 0), 0.2, 0.2)\n'
     return prog
 
-rob = urx.Robot("172.31.1.3")
-print("Connected to UR")
-
 p1 = [1.8908352851867676, -1.662417551080221, 2.1432841459857386, -2.2762657604613246, -1.5395177046405237, 2.842644453048706]
 p2 = [1.2429156303405762, -2.1738087139525355, 1.926166836415426, -1.4705680173686524, -1.4161360899554651, 2.0479683876037598]
 p3 = [1.0125579833984375, -1.9873339138426722, 2.3369506041156214, -1.9662381611266078, -1.385411564503805, 2.0025296211242676]
@@ -53,15 +50,19 @@ prog += end
 #Положительный y — к основанию
 #положительный x — к машинам (влево от основания)
 #z ok
-#rob.translate((-0.1, 0, 0), 0.2, 0.2)
-print('Current Pose', rob.get_pose())
-sleep(5)
-rob.translate((0, 0, -0.1), 0.2, 0.2)
-#rob.movej((0, 0, 0, 0, 0, -3.14/2), 0.5, 0.2, relative=True)
-print('Current Pose', rob.get_pose())
-sleep(5)
-rob.translate((0, 0, 0.2), 0.2, 0.2)
-print('Current Pose', rob.get_pose())
-sleep(5)
-#rob.movej((0, 0, 0, 0, 0, 3.14/2), 0.5, 0.2, relative=True)
-rob.close()
+
+if __name__ == "__main__":
+    rob = urx.Robot("172.31.1.3")
+    print("Connected to UR")
+    rob.translate((-0.1, 0, 0), 0.2, 0.2)
+    print('Current Pose', rob.get_pose())
+    sleep(5)
+    rob.translate((0, 0, -0.1), 0.2, 0.2)
+    rob.movej((0, 0, 0, 0, 0, -3.14/2), 0.5, 0.2, relative=True)
+    print('Current Pose', rob.get_pose())
+    sleep(5)
+    rob.translate((0, 0, 0.2), 0.2, 0.2)
+    print('Current Pose', rob.get_pose())
+    sleep(5)
+    rob.movej((0, 0, 0, 0, 0, 3.14/2), 0.5, 0.2, relative=True)
+    rob.close()
