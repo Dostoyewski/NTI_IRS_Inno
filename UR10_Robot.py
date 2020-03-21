@@ -15,6 +15,9 @@ HG = 0.4250093061523666
 X0 = 299
 Y0 = 387
 
+W = 320
+H = 180
+
 class UR10_Robot:
 
     def __init__(self, ip, ac, rac, vel, rvel, gr_state=True):
@@ -128,9 +131,24 @@ class UR10_Robot:
         sleep(0.5)
 
     def stay_xy(self):
+        '''Taking cube from fix alt'''
         self.get_on_alt(HG)
         coords = get_cube_coords()[0]
         dx = X0 - coords[0]
         dy = -(Y0 - coords[1])
         pic = 0.7*self.calc_transform_coef()
         self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
+
+    def get_down_center(self):
+        '''going down with focusing on object'''
+        #TEST
+        Np = 20
+        coords = self.get_pose()
+        h = coords[2]
+        dh = (HG - h)/Np
+        for i in range(Np):
+            coords = get_cube_coords()[0]
+            dx = W - coords[0]
+            dy = -(H - coords[1])
+            pic = 0.7*self.calc_transform_coef()
+            self.rtranslate(dx/(100*pic), dy/(100*pic), -dh)
