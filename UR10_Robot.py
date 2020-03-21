@@ -1,8 +1,19 @@
 import urx
 import math
 from time import sleep
+from get_coords import get_cube_coords
+import cv2
+import imutils
+import numpy as np
+from imutils.video import VideoStream
+from get_coords import get_cube_coords
 
 H0 = 0.2793680869198448
+COFF = 0.07
+HG = 0.4250093061523666
+
+X0 = 299
+Y0 = 387
 
 class UR10_Robot:
 
@@ -11,12 +22,16 @@ class UR10_Robot:
         self.rob = urx.Robot(ip)
         print("Connected to UR")
         sleep(0.2)
+        pp = self.rob.get_pose()
+        print(pp)
         self.ac = ac
         self.rac = rac
         self.vel = vel
         self.rvel = rvel
         self.npose = self.rob.getl()
         self.gr_state = gr_state
+        self.vs = VideoStream(src=1).start()
+        sleep(0.5)
 
     def get_gripper_state(self):
         '''Getter for gripper state'''
@@ -55,7 +70,7 @@ class UR10_Robot:
         prog += end
         self.rob.send_program(prog)
         print('sended')
-        self.gr_state = !self.gr_state
+        self.gr_state = not self.gr_state
         sleep(0.5)
 
     def gr_open(self):
@@ -69,7 +84,7 @@ class UR10_Robot:
         prog += end
         print('sended')
         self.rob.send_program(prog)
-        self.gr_state = !self.gr_state
+        self.gr_state = not self.gr_state
         sleep(0.5)
 
     def get_pose(self):
@@ -80,6 +95,7 @@ class UR10_Robot:
         '''Shutdown robot'''
         self.rob.close()
         print('Robot closed')
+        cv2.destroyAllWindows()
 
     def release_object(self):
         '''Releasing obj'''
@@ -102,3 +118,19 @@ class UR10_Robot:
         self.gr_close()
         sleep(0.5)
         self.rtranslate(0, 0, -dh)
+
+    def get_on_alt(self, H):
+        '''Getting on global altitude'''
+        coords = self.get_pose()
+        h = coords[2]
+        dh = H - h
+        self.rtranslate(0, 0, dh)
+        sleep(0.5)
+
+    def stay_xy(self):
+        self.get_on_alt(HG)
+        coords = get_cube_coords()[0]
+        dx = X0 - coords[0]
+        dy = -(Y0 - coords[1])
+        pic = 0.7*self.calc_transform_coef()
+        self.rtranslate(dx/(100*pic), dy/(100*pic), 0)

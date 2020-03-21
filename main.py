@@ -11,6 +11,10 @@ VEL = 0.2
 ACC = 0.2
 RVEL = 0.5
 
+MIN = 200
+
+DELTA = 7
+
 rob = UR10_Robot("172.31.1.3", ACC, ACC, VEL, RVEL)
 
 #Положительный y — к основанию
@@ -20,10 +24,11 @@ rob = UR10_Robot("172.31.1.3", ACC, ACC, VEL, RVEL)
 if __name__ == "__main__":
     '''sleep(0.5)
     rob.rtranslate(0.1, 0, 0)'''
-    rob.take_object()
+    rob.stay_xy()
     print(rob.get_pose())
     sleep(2)
-    rob.release_object()
+    rob.take_object()
+    #rob.release_object()
     '''rob.gr_close()
     sleep(2)
     rob.rtranslate(-0.2, -0.1, 0.1)
