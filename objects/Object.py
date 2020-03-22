@@ -12,9 +12,14 @@ class Object:
     def __init__(self, position, color):
         self.position = position
         self.color = color
+        self.distance = 0
 
     def get_position(self):
         return self.position
+
+    def calc_distance(self, coord):
+        self.distance = ((self.position[0] - coord[0])**2 
+                        + (self.position[1] - coord[1])**2)**0.5
 
     def set_position(self, position):
         self.position = position

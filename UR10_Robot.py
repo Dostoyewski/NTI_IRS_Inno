@@ -206,16 +206,21 @@ class UR10_Robot:
                 else:
                     self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
 
-    def check_existance(self, objects, pos1):
-        for obj in objects:
-            pos = obj.get_position()
-            if abs(pos[0] - pos1[0]) <= 0.08 and abs(pos[1] - pos1[1]) <= 0.08:
+    def check_existance(self, objects, objn):
+        '''Checking existance in current map obj'''
+        pos1 = objn.get_position()
+        for i in range(len(objects)):
+            pos = objects[i].get_position()
+            if abs(pos[0] - pos1[0]) <= 0.05 and abs(pos[1] - pos1[1]) <= 0.05:
                 #obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
+                if objn.__class__.__name__ == 'Bucket':
+                    objects[i] = objn
                 return True
         return False
 
     def make_map(self):
-        '''Constructing map'''
+        '''Constructing map
+        This function addes object to buil-in variable map'''
         self.get_on_alt(SH)
         detector = ObjectsDetector(debug_mode=True)
         frame = self.vs.read()
@@ -233,30 +238,37 @@ class UR10_Robot:
                 a = Bucket([bco[0]+dx, bco[1]+dy], obj.get_color(), obj.get_radius())
             else:
                 a = Cube([bco[0]+dx, bco[1]+dy], obj.get_color())
-            if not self.check_existance(self.TO, [bco[0]+dx, bco[1]+dy]):
+            if not self.check_existance(self.TO, a):
                 print('Added new object')
                 self.TO.append(a)
 
-    def translate(self, x, y, z):
+    def translate(self, x, y, z, zr=True):
         '''Moving in global Frame'''
         coord = self.get_pose()
-        self.rtranslate(x - coord[0], y - coord[1], z - coord[2])
+        if not zr:
+            self.rtranslate(x - coord[0], y - coord[1], z - coord[2])
+        else:
+            self.rtranslate(x - coord[0], y - coord[1], 0)
 
     def construct_map(self):
         '''Constructing map'''
+        self.translate(0.11022135615486867, -0.5455495045770956, 0.7135153738252198, zr=False)
         self.make_map()
         self.rtranslate(0.5, 0, 0)
-        for i in range(10):
+        N_points = 3
+        for i in range(N_points):
             self.make_map()
-            self.rtranslate(-0.1, 0, 0)
+            self.rtranslate(-1/N_points, 0, 0)
         self.rtranslate(0, -0.3, 0)
-        for i in range(10):
+        for i in range(N_points):
             self.make_map()
-            self.rtranslate(0.1, 0, 0)
+            self.rtranslate(1/N_points), 0, 0)
         self.rtranslate(-0.5, 0, 0)
 
     def take_cube(self, cube):
+        '''Takes cube object from ground,
+        works with random altitude'''
         self.gr_open()
-        self.get_down_center('GREEN', 'Cube')
-        self.stab_xy('GREEN', 'Cube')
+        self.get_down_center(cube.get_color(), 'Cube')
+        self.stab_xy(cube.get_color(), 'Cube')
         self.take_object()

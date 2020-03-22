@@ -22,11 +22,6 @@ rob = UR10_Robot("172.31.1.3", ACC, ACC, VEL, RVEL)
 #z ok
 
 if __name__ == "__main__":
-    '''rob.make_map()
-    rob.rtranslate(-0.1, 0.3, 0)
-    rob.make_map()
-    sleep(2)'''
-    rob.translate(0.11022135615486867, -0.5455495045770956, 0.7135153738252198)
     C = []
     rob.construct_map()
     for tar in rob.TO:
@@ -35,7 +30,7 @@ if __name__ == "__main__":
     print(rob.TO)
     print(len(C))
     for coord in C:
-        rob.translate(coord[0], coord[1], 0.7135153738252198)
+        rob.translate(coord[0], coord[1], 0)
         sleep(0.5)
     '''
     rob.gr_open()
