@@ -13,6 +13,8 @@ import sys
 
 NROB = 1
 
+start_m_c = [0.11022135615486867, -0.5455495045770956, 0.7135153738252198]
+
 H0 = 0.2793680869198448
 #COFF = 0.09
 #For r1
@@ -23,8 +25,8 @@ SH = 0.7134657041263184
 X0 = 299
 Y0 = 387
 
-W = 320
-H = 180
+W = 640
+H = 360
 
 class NoObjException(Exception):
         print('No obj detected')
@@ -171,6 +173,8 @@ class UR10_Robot:
         self.get_on_alt(SH)
         detector = ObjectsDetector(debug_mode=True)
         Np = 1
+        if typ == "Bucket":
+            Np = 3
         coords = self.get_pose()
         h = coords[2]
         dh = (HG - h)/Np
@@ -202,12 +206,11 @@ class UR10_Robot:
                 else:
                     self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
 
-    def check_existance(self, objects, tar):
+    def check_existance(self, objects, pos1):
         for obj in objects:
             pos = obj.get_position()
-            pos1 = tar.get_position()
-            if abs(pos[0] - pos1[0]) <= 0.05 and abs(pos[1] - pos1[1]) <= 0.05:
-                obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
+            if abs(pos[0] - pos1[0]) <= 0.08 and abs(pos[1] - pos1[1]) <= 0.08:
+                #obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
                 return True
         return False
 
@@ -217,11 +220,12 @@ class UR10_Robot:
         detector = ObjectsDetector(debug_mode=True)
         frame = self.vs.read()
         objects = detector.get_objects(frame)
+        print(*objects)
         for obj in objects:
             coords = obj.get_position()
             dx = W - coords[0]
             dy = -(H - coords[1])
-            pic = 0.7*self.calc_transform_coef()
+            pic = 1.08*self.calc_transform_coef()*2
             bco = self.get_pose()
             dx /= 100*pic
             dy /= 100*pic
@@ -229,7 +233,8 @@ class UR10_Robot:
                 a = Bucket([bco[0]+dx, bco[1]+dy], obj.get_color(), obj.get_radius())
             else:
                 a = Cube([bco[0]+dx, bco[1]+dy], obj.get_color())
-            if not self.check_existance(self.TO, obj):
+            if not self.check_existance(self.TO, [bco[0]+dx, bco[1]+dy]):
+                print('Added new object')
                 self.TO.append(a)
 
     def translate(self, x, y, z):
@@ -244,7 +249,14 @@ class UR10_Robot:
         for i in range(10):
             self.make_map()
             self.rtranslate(-0.1, 0, 0)
+        self.rtranslate(0, -0.3, 0)
         for i in range(10):
             self.make_map()
             self.rtranslate(0.1, 0, 0)
         self.rtranslate(-0.5, 0, 0)
+
+    def take_cube(self, cube):
+        self.gr_open()
+        self.get_down_center('GREEN', 'Cube')
+        self.stab_xy('GREEN', 'Cube')
+        self.take_object()

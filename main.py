@@ -25,11 +25,19 @@ if __name__ == "__main__":
     '''rob.make_map()
     rob.rtranslate(-0.1, 0.3, 0)
     rob.make_map()
-    sleep(2)
+    sleep(2)'''
+    rob.translate(0.11022135615486867, -0.5455495045770956, 0.7135153738252198)
     C = []
+    rob.construct_map()
     for tar in rob.TO:
         C.append(tar.get_position())
-    print(C)'''
+    print(*C)
+    print(rob.TO)
+    print(len(C))
+    for coord in C:
+        rob.translate(coord[0], coord[1], 0.7135153738252198)
+        sleep(0.5)
+    '''
     rob.gr_open()
     rob.get_down_center('GREEN', 'Cube')
     rob.stab_xy('GREEN', 'Cube')
@@ -37,9 +45,9 @@ if __name__ == "__main__":
     rob.take_object()
     sleep(2)
     rob.rtranslate(0, 0.3, 0.2)
-    rob.get_down_center('RED', 'Bucket')
-    rob.stab_xy('RED', 'Bucket')
-    rob.gr_open()
+    rob.get_down_center('GREEN', 'Bucket')
+    rob.stab_xy('GREEN', 'Bucket')
+    rob.gr_open()'''
 
     #rob.release_object()
     #rob.release_object()

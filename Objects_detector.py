@@ -1,6 +1,5 @@
 import time
 from typing import List
-from mean_color import get_mean
 
 import cv2
 import imutils
@@ -24,8 +23,8 @@ class ObjectsDetector:
 
     """
 
-    def __init__(self, width=640,
-                 height=360,
+    def __init__(self, width=1280,
+                 height=720,
                  circles_pool_length=5,
                  min_area_to_detect=200,
                  circle_factor=1.3,
