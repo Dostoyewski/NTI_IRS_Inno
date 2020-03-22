@@ -22,15 +22,15 @@ rob = UR10_Robot("172.31.1.3", ACC, ACC, VEL, RVEL)
 #z ok
 
 if __name__ == "__main__":
-    rob.make_map()
+    '''rob.make_map()
     rob.rtranslate(-0.1, 0.3, 0)
     rob.make_map()
     sleep(2)
     C = []
     for tar in rob.TO:
         C.append(tar.get_position())
-    print(C)
-    '''rob.gr_open()
+    print(C)'''
+    rob.gr_open()
     rob.get_down_center('GREEN', 'Cube')
     rob.stab_xy('GREEN', 'Cube')
     print(rob.get_pose())
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     rob.rtranslate(0, 0.3, 0.2)
     rob.get_down_center('RED', 'Bucket')
     rob.stab_xy('RED', 'Bucket')
-    rob.gr_open()'''
+    rob.gr_open()
 
     #rob.release_object()
     #rob.release_object()

@@ -11,12 +11,12 @@ from objects.Object import Bucket, Cube, Object
 from Objects_detector import ObjectsDetector
 import sys
 
-NROB = 2
+NROB = 1
 
 H0 = 0.2793680869198448
-COFF = 0.09
+#COFF = 0.09
 #For r1
-#COFF = 0.07
+COFF = 0.07
 HG = 0.4250093061523666
 SH = 0.7134657041263184
 
@@ -62,10 +62,6 @@ class UR10_Robot:
         '''relative translation'''
         self.rob.translate((x, y, z), self.vel, self.ac)
     
-    def translate(self, pose):
-        '''Global translation'''
-        self.rob.translate(pose, self.vel, self.ac)
-
     def rrotate(self, phi):
         '''Relative rotation of end-effector'''
         self.rob.movej((0, 0, 0, 0, 0, phi), self.rvel, self.rac, relative=True)
@@ -211,6 +207,7 @@ class UR10_Robot:
             pos = obj.get_position()
             pos1 = tar.get_position()
             if abs(pos[0] - pos1[0]) <= 0.05 and abs(pos[1] - pos1[1]) <= 0.05:
+                obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
                 return True
         return False
 
@@ -234,3 +231,20 @@ class UR10_Robot:
                 a = Cube([bco[0]+dx, bco[1]+dy], obj.get_color())
             if not self.check_existance(self.TO, obj):
                 self.TO.append(a)
+
+    def translate(self, x, y, z):
+        '''Moving in global Frame'''
+        coord = self.get_pose()
+        self.rtranslate(x - coord[0], y - coord[1], z - coord[2])
+
+    def construct_map(self):
+        '''Constructing map'''
+        self.make_map()
+        self.rtranslate(0.5, 0, 0)
+        for i in range(10):
+            self.make_map()
+            self.rtranslate(-0.1, 0, 0)
+        for i in range(10):
+            self.make_map()
+            self.rtranslate(0.1, 0, 0)
+        self.rtranslate(-0.5, 0, 0)
