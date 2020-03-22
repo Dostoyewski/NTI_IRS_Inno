@@ -11,8 +11,12 @@ from objects.Object import Bucket, Cube, Object
 from Objects_detector import ObjectsDetector
 import sys
 
+NROB = 2
+
 H0 = 0.2793680869198448
-COFF = 0.07
+COFF = 0.09
+#For r1
+#COFF = 0.07
 HG = 0.4250093061523666
 SH = 0.7134657041263184
 
@@ -41,6 +45,7 @@ class UR10_Robot:
         self.npose = self.rob.getl()
         self.gr_state = gr_state
         self.vs = VideoStream(src=0).start()
+        self.TO = []
         sleep(0.5)
 
     def get_gripper_state(self):
@@ -149,7 +154,14 @@ class UR10_Robot:
             dx = X0 - coords[0]
             dy = -(Y0 - coords[1])
             pic = 0.7*self.calc_transform_coef()
-            self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
+            if NROB == 2:
+                    pic = 0.6*self.calc_transform_coef()
+                    if typ == 'Cube':
+                        self.rtranslate(dx/(100*pic), dy/(100*pic) - 0.01, 0)
+                    else:
+                        self.rtranslate(dx/(100*pic) - 0.01, dy/(100*pic), 0)
+            else:
+                self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
 
     def apply_mask(self, objects, mask, typ):
         '''Applying mask on objects'''
@@ -185,4 +197,40 @@ class UR10_Robot:
                 dx = W - coords[0]
                 dy = -(H - coords[1])
                 pic = 0.7*self.calc_transform_coef()
-                self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
+                if NROB == 2:
+                    pic = 0.6*self.calc_transform_coef()
+                    if typ == 'Cube':
+                        self.rtranslate(dx/(100*pic) + 0.005, dy/(100*pic) - 0.01, dh)
+                    else:
+                        self.rtranslate(dx/(100*pic) - 0.01, dy/(100*pic), dh)
+                else:
+                    self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
+
+    def check_existance(self, objects, tar):
+        for obj in objects:
+            pos = obj.get_position()
+            pos1 = tar.get_position()
+            if abs(pos[0] - pos1[0]) <= 0.05 and abs(pos[1] - pos1[1]) <= 0.05:
+                return True
+        return False
+
+    def make_map(self):
+        '''Constructing map'''
+        self.get_on_alt(SH)
+        detector = ObjectsDetector(debug_mode=True)
+        frame = self.vs.read()
+        objects = detector.get_objects(frame)
+        for obj in objects:
+            coords = obj.get_position()
+            dx = W - coords[0]
+            dy = -(H - coords[1])
+            pic = 0.7*self.calc_transform_coef()
+            bco = self.get_pose()
+            dx /= 100*pic
+            dy /= 100*pic
+            if obj.__class__.__name__ == 'Bucket':
+                a = Bucket([bco[0]+dx, bco[1]+dy], obj.get_color(), obj.get_radius())
+            else:
+                a = Cube([bco[0]+dx, bco[1]+dy], obj.get_color())
+            if not self.check_existance(self.TO, obj):
+                self.TO.append(a)
