@@ -9,6 +9,7 @@ from imutils.video import VideoStream
 from get_coords import get_cube_coords
 from objects.Object import Bucket, Cube, Object
 from Objects_detector import ObjectsDetector
+import sys
 
 H0 = 0.2793680869198448
 COFF = 0.07
@@ -20,6 +21,9 @@ Y0 = 387
 
 W = 320
 H = 180
+
+class NoObjException(Exception):
+        print('No obj detected')
 
 class UR10_Robot:
 
@@ -132,35 +136,28 @@ class UR10_Robot:
         dh = H - h
         self.rtranslate(0, 0, dh)
 
-    def take_cube(self, mask):
+    def stab_xy(self, mask, typ):
         '''Taking cube from fix alt'''
         self.get_on_alt(HG)
         detector = ObjectsDetector(debug_mode=True)
         frame = self.vs.read()
-        objects = self.apply_mask(detector.get_objects(frame), mask)
-        if len(objects) == 0:
-            print('No obj')
-            return
-        coords = objects.get_position()
-        dx = X0 - coords[0]
-        dy = -(Y0 - coords[1])
-        pic = 0.7*self.calc_transform_coef()
-        print(dx, dy)
-        self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
+        objects = self.apply_mask(detector.get_objects(frame), mask, typ)
+        if objects is None:
+            raise NoObjException('No obj')
+        else:
+            coords = objects.get_position()
+            dx = X0 - coords[0]
+            dy = -(Y0 - coords[1])
+            pic = 0.7*self.calc_transform_coef()
+            self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
 
-    def get_bucket_coord(self, objects, mask):
-        '''Getting bucket coordinates'''
-        for obj in objects:
-            if obj.get_color() == mask and obj.__class__.__name__ == "Bucket":
-                return obj
-
-    def apply_mask(self, objects, mask):
+    def apply_mask(self, objects, mask, typ):
         '''Applying mask on objects'''
         for obj in objects:
-            if obj.get_color() == mask and obj.__class__.__name__ == "Cube":
+            if obj.get_color() == mask and obj.__class__.__name__ == typ:
                 return obj
 
-    def get_down_center(self, mask):
+    def get_down_center(self, mask, typ):
         '''going down with focusing on object'''
         #TEST
         self.get_on_alt(SH)
@@ -170,26 +167,22 @@ class UR10_Robot:
         h = coords[2]
         dh = (HG - h)/Np
         frame = self.vs.read()
-        objects = self.apply_mask(detector.get_objects(frame), mask)
-        if len(objects) == 0:
-            print('No obj')
-            return
-        coords = objects.get_position()
-        print(h)
-        for i in range(Np):
-            try:
-                frame = self.vs.read()
-                objects = self.apply_mask(detector.get_objects(frame), mask)
-                coords = objects.get_position()
-                print(get_cube_coords)
-            except IndexError:
-                print('Exception')
+        print(*detector.get_objects(frame))
+        objects = self.apply_mask(detector.get_objects(frame), mask, typ)
+        if objects is None:
+            raise NoObjException('No obj')
+        else:
+            coords = objects.get_position()
+            for i in range(Np):
+                try:
+                    frame = self.vs.read()
+                    objects = self.apply_mask(detector.get_objects(frame), mask, typ)
+                    coords = objects.get_position()
+                except IndexError:
+                    pic = 0.7*self.calc_transform_coef()
+                    self.rtranslate(0, 0, dh)
+                    continue
+                dx = W - coords[0]
+                dy = -(H - coords[1])
                 pic = 0.7*self.calc_transform_coef()
-                self.rtranslate(0, 0, dh)
-                continue
-            dx = W - coords[0]
-            dy = -(H - coords[1])
-            pic = 0.7*self.calc_transform_coef()
-            print(pic)
-            print('dxdy', dx/(100*pic), dy/(100*pic))
-            self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
+                self.rtranslate(dx/(100*pic), dy/(100*pic), dh)

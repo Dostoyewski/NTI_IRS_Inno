@@ -22,14 +22,16 @@ rob = UR10_Robot("172.31.1.3", ACC, ACC, VEL, RVEL)
 #z ok
 
 if __name__ == "__main__":
-    '''sleep(0.5)
-    rob.rtranslate(0.1, 0, 0)'''
-    rob.get_down_center('RED')
-    rob.take_cube('RED')
+    rob.gr_open()
+    rob.get_down_center('GREEN', 'Cube')
+    rob.stab_xy('GREEN', 'Cube')
     print(rob.get_pose())
     rob.take_object()
     sleep(2)
-    rob.release_object()
+    rob.rtranslate(0, 0.3, 0.2)
+    rob.get_down_center('RED', 'Bucket')
+    rob.stab_xy('RED', 'Bucket')
+    #rob.release_object()
     #rob.release_object()
     '''rob.gr_close()
     sleep(2)
