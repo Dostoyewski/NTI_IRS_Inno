@@ -5,7 +5,7 @@ from imutils.video import VideoStream
 import time
 import math
 
-vs = VideoStream(src=1).start()
+#vs = VideoStream(src=1).start()
 time.sleep(0.5)
 MIN = 200
 
@@ -13,7 +13,7 @@ DELTA = 7
 
 OFFSET = 0.07
 
-def get_cube_coords():
+def get_cube_coords(vs):
     frame = vs.read()
     frame = imutils.resize(frame, width=640, height=360)
 
@@ -64,12 +64,12 @@ def get_cube_coords():
 def check_existance(obj, coord):
     eps = 0.05
     for o in obj:
-        if sqrt((o[0] - coord[0])**2 + (o[1] - coord[1])**2) <= 0.05:
+        if math.sqrt((o[0] - coord[0])**2 + (o[1] - coord[1])**2) <= 0.05:
             return obj.index(o)
     return False
 
 if __name__ == "__main__":
-    vs = VideoStream(src=1).start()
+    vs = VideoStream(src=0).start()
     time.sleep(0.5)
     velocity = 0.2
     x, y = 0, 0

@@ -7,10 +7,13 @@ import imutils
 import numpy as np
 from imutils.video import VideoStream
 from get_coords import get_cube_coords
+from objects.Object import Bucket, Cube, Object
+from Objects_detector import ObjectsDetector
 
 H0 = 0.2793680869198448
 COFF = 0.07
 HG = 0.4250093061523666
+SH = 0.7134657041263184
 
 X0 = 299
 Y0 = 387
@@ -33,7 +36,7 @@ class UR10_Robot:
         self.rvel = rvel
         self.npose = self.rob.getl()
         self.gr_state = gr_state
-        self.vs = VideoStream(src=1).start()
+        self.vs = VideoStream(src=0).start()
         sleep(0.5)
 
     def get_gripper_state(self):
@@ -128,27 +131,65 @@ class UR10_Robot:
         h = coords[2]
         dh = H - h
         self.rtranslate(0, 0, dh)
-        sleep(0.5)
 
-    def stay_xy(self):
+    def take_cube(self, mask):
         '''Taking cube from fix alt'''
         self.get_on_alt(HG)
-        coords = get_cube_coords()[0]
+        detector = ObjectsDetector(debug_mode=True)
+        frame = self.vs.read()
+        objects = self.apply_mask(detector.get_objects(frame), mask)
+        if len(objects) == 0:
+            print('No obj')
+            return
+        coords = objects.get_position()
         dx = X0 - coords[0]
         dy = -(Y0 - coords[1])
         pic = 0.7*self.calc_transform_coef()
+        print(dx, dy)
         self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
 
-    def get_down_center(self):
+    def get_bucket_coord(self, objects, mask):
+        '''Getting bucket coordinates'''
+        for obj in objects:
+            if obj.get_color() == mask and obj.__class__.__name__ == "Bucket":
+                return obj
+
+    def apply_mask(self, objects, mask):
+        '''Applying mask on objects'''
+        for obj in objects:
+            if obj.get_color() == mask and obj.__class__.__name__ == "Cube":
+                return obj
+
+    def get_down_center(self, mask):
         '''going down with focusing on object'''
         #TEST
-        Np = 20
+        self.get_on_alt(SH)
+        detector = ObjectsDetector(debug_mode=True)
+        Np = 1
         coords = self.get_pose()
         h = coords[2]
         dh = (HG - h)/Np
+        frame = self.vs.read()
+        objects = self.apply_mask(detector.get_objects(frame), mask)
+        if len(objects) == 0:
+            print('No obj')
+            return
+        coords = objects.get_position()
+        print(h)
         for i in range(Np):
-            coords = get_cube_coords()[0]
+            try:
+                frame = self.vs.read()
+                objects = self.apply_mask(detector.get_objects(frame), mask)
+                coords = objects.get_position()
+                print(get_cube_coords)
+            except IndexError:
+                print('Exception')
+                pic = 0.7*self.calc_transform_coef()
+                self.rtranslate(0, 0, dh)
+                continue
             dx = W - coords[0]
             dy = -(H - coords[1])
             pic = 0.7*self.calc_transform_coef()
-            self.rtranslate(dx/(100*pic), dy/(100*pic), -dh)
+            print(pic)
+            print('dxdy', dx/(100*pic), dy/(100*pic))
+            self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
