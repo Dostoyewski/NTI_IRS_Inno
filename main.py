@@ -39,10 +39,10 @@ if __name__ == "__main__":
             rob.take_all_cubes('GREEN')
         except:
             pass
-        try:
+        '''try:
             rob.take_all_cubes('RED')
         except Exception:
-            pass
+            pass'''
         if time.time() - time0 >= DT:
             print("Program ended")
             break

@@ -174,21 +174,25 @@ class UR10_Robot:
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
+                    #coords = objects[0].get_position()
                 if self.rec_param == 2:
                     self.rtranslate(-0.03, 0, 0)
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
+                    #coords = objects[0].get_position()
                 if self.rec_param == 3:
                     self.rtranslate(0, 0.03, 0)
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
+                    #coords = objects[0].get_position()
                 if self.rec_param == 4:
                     self.rec_param = 0
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
+                    #coords = objects[0].get_position()
                     raise NoObjException('No obj')
                 self.rec_param += 1
                 self.stab_xy(mask, typ)
@@ -198,15 +202,15 @@ class UR10_Robot:
             if NROB == 2:
                     pic = 0.6*self.calc_transform_coef()
                     if typ == 'Cube':
-                        self.rtranslate(dx/(100*pic), dy/(100*pic) - 0.01, 0)
+                        self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
                     else:
-                        self.rtranslate(dx/(100*pic) - 0.01, dy/(100*pic), 0)
+                        self.rtranslate(dx/(100*pic) - 0.04, dy/(100*pic), 0)
             else:
                 print(dx/(100*pic), dy/(100*pic))
                 if typ == 'Cube':
-                    self.rtranslate(dx/(100*pic), dy/(100*pic) + 0.01, 0)
-                else:
                     self.rtranslate(dx/(100*pic), dy/(100*pic) - 0.01, 0)
+                else:
+                    self.rtranslate(dx/(100*pic), dy/(100*pic) - 0.02, 0)
                     print('stv')
             '''if self.check_bucket():
                 self.phi += 3.14/2
