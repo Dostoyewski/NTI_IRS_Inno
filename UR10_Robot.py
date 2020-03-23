@@ -268,7 +268,51 @@ class UR10_Robot:
     def take_cube(self, cube):
         '''Takes cube object from ground,
         works with random altitude'''
+        pos = cube.get_position()
+        self.translate(pos[0], pos[1]+COFF, 0)
         self.gr_open()
         self.get_down_center(cube.get_color(), 'Cube')
+        #Needs to calibrate hand angle
         self.stab_xy(cube.get_color(), 'Cube')
         self.take_object()
+        print("object taked")
+
+    def get_color_objects(self, color):
+        '''Return array with objects, 
+        sorted by type, color'''
+        pos = self.get_pose()
+        targets = []
+        for obj in self.TO:
+            obj.calc_distance(pos)
+            if color == obj.get_color() and obj.__class__.__name__ == 'Cube':
+                targets.append(obj)
+        for obj in self.TO:
+            if obj.__class__.__name__ == 'Bucket' and color == obj.get_color():
+                targets.append(obj)
+        return self.min_dist(targets)
+
+    def min_dist(self, targets):
+        '''This function are for calculating minimal distance'''
+        last_bucket = targets[-1]
+        targets.del[-1]
+        targets.sorted(key = lambda x: x.distance)
+        targets.append(last_bucket)
+        return targets
+     
+    def take_all_cubes(self, color):
+        '''This function takes all cubes on field'''
+        obj = self.get_color_objects(color)
+        bpos = obj[-1].get_position()
+        count = len(obj) - 1
+        for i in range(count):
+            print('Taking cube')
+            try:
+                self.take_cube(obj[i])
+            except NoObjException:
+                print('No cube found on this coords', obj[i].get_position())
+                continue
+            self.translate(bpos[0], bpos[1]+COFF, 0)
+            self.get_down_center(color, 'Bucket')
+            self.stab_xy(color, 'Bucket')
+            self.gr_open()
+            sleep(0.5)

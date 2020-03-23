@@ -29,9 +29,13 @@ if __name__ == "__main__":
     print(*C)
     print(rob.TO)
     print(len(C))
-    for coord in C:
+    '''for coord in C:
         rob.translate(coord[0], coord[1], 0)
-        sleep(0.5)
+        sleep(0.5)'''
+
+    rob.take_all_cubes('RED')
+
+
     '''
     rob.gr_open()
     rob.get_down_center('GREEN', 'Cube')
@@ -56,5 +60,4 @@ if __name__ == "__main__":
     sleep(0.5)
     rob.rrotate(-3.14/2)
     sleep(0.5)'''
-    
     rob.shutdown()

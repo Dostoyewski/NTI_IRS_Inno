@@ -1,9 +1,9 @@
 """
 Objects for detection
 """
+from abc import ABCMeta, abstractmethod
 
-
-class Object:
+class Object(metaclass = ABCMeta):
     # position – tuple of pixels!!!
     # x and y coordinates (e.g. (x,y) )
     #
@@ -14,6 +14,7 @@ class Object:
         self.color = color
         self.distance = 0
 
+    @abstractmethod
     def get_position(self):
         return self.position
 
