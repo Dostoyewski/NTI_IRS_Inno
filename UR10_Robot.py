@@ -47,7 +47,7 @@ class UR10_Robot:
         self.npose = self.rob.getl()
         self.gr_state = gr_state
         self.vs = VideoStream(src=0).start()
-        self.TO = []
+        self.TO = [] # target objects
         sleep(0.5)
 
     def get_gripper_state(self):
@@ -209,12 +209,17 @@ class UR10_Robot:
     def check_existance(self, objects, objn):
         '''Checking existance in current map obj'''
         pos1 = objn.get_position()
+        epos = self.get_pose()
         for i in range(len(objects)):
             pos = objects[i].get_position()
             if abs(pos[0] - pos1[0]) <= 0.05 and abs(pos[1] - pos1[1]) <= 0.05:
                 #obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
                 if objn.__class__.__name__ == 'Bucket':
                     objects[i] = objn
+                objn.calc_distance(epos)
+                if objn.distance <= objects[i].distance:
+                    print("color replaced", objects[i], objn)
+                    objects[i].color = objn.color
                 return True
         return False
 
@@ -240,6 +245,7 @@ class UR10_Robot:
                 a = Cube([bco[0]+dx, bco[1]+dy], obj.get_color())
             if not self.check_existance(self.TO, a):
                 print('Added new object')
+                a.calc_distance(bco)
                 self.TO.append(a)
 
     def translate(self, x, y, z, zr=True):
@@ -302,6 +308,7 @@ class UR10_Robot:
     def take_all_cubes(self, color):
         '''This function takes all cubes on field'''
         obj = self.get_color_objects(color)
+        print(obj)
         bpos = obj[-1].get_position()
         count = len(obj) - 1
         for i in range(count):
