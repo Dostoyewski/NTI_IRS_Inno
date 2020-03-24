@@ -1,43 +1,59 @@
 import urx
-import math
 from time import sleep
-from get_coords import get_cube_coords
 import cv2
-import imutils
-import numpy as np
 from imutils.video import VideoStream
-from get_coords import get_cube_coords
 from objects.Object import Bucket, Cube, Object
 from Objects_detector import ObjectsDetector
-import sys
 
+# Num of testing robot
 NROB = 1
 
 start_m_c = [0.11022135615486867, -0.5455495045770956, 0.7135153738252198]
 
+# Zero height
 H0 = 0.2793680869198448
-#COFF = 0.09
-#For r1
+
+# Camera offset
 COFF = 0.07
+# Gripper height
 HG = 0.4250093061523666
+# Stabilizing height
 SH = 0.7134657041263184
 
 X0 = 299
 Y0 = 387
 
+# Center of image
 W = 320
 H = 180
 
+
 class NoObjException(Exception):
-        print('No obj detected')
+    """
+    Class ob NoObjectException, will be raised, when cube is not detected
+    """
+    print('No obj detected')
+
 
 class NoBucketException(Exception):
-        print('No bucket detected')
+    """
+    Class ob NoObjectException, will be raised, when bucket is not detected
+    """
+    print('No bucket detected')
+
 
 class UR10_Robot:
 
     def __init__(self, ip, ac, rac, vel, rvel, gr_state=True):
-        '''Initialization, connecting to UR10'''
+        """
+        Initialization of UR10
+        :param ip: Ip adress of remote UR10 robot
+        :param ac: Linear acceleration
+        :param rac: Rotational acceleration
+        :param vel: Linear velocity
+        :param rvel: Rotational velocity
+        :param gr_state: Gripper state
+        """
         self.rob = urx.Robot(ip)
         print("Connected to UR")
         sleep(0.2)
@@ -50,7 +66,7 @@ class UR10_Robot:
         self.npose = self.rob.getl()
         self.gr_state = gr_state
         self.vs = VideoStream(src=0).start()
-        self.TO = [] # target objects
+        self.TO = []  # target objects
         self.phi = 0
         self.rec_param = 0
         self.detector = ObjectsDetector(debug_mode=True, daytime='ads')
@@ -64,14 +80,22 @@ class UR10_Robot:
         '''Get pixels in 1 cm'''
         h = self.get_pose()
         h = h[2]
-        return -1100000/9991*h + 938212/9991
+        return -1100000 / 9991 * h + 938212 / 9991
 
-    def rtranslate(self, x, y, z):
-        '''relative translation'''
+    def rtranslate(self, x: float, y: float, z: float):
+        """
+        Realtive translation of end-effector
+        :param x: x displacement
+        :param y: y displacement
+        :param z: z displacement
+        """
         self.rob.translate((x, y, z), self.vel, self.ac)
-    
+
     def rrotate(self, phi):
-        '''Relative rotation of end-effector'''
+        """
+        Relative rotation of end-effector
+        :param phi: Rotation angle
+        """
         self.rob.movej((0, 0, 0, 0, 0, phi), self.rvel, self.rac, relative=True)
 
     def rotate(self, phi):
@@ -82,7 +106,7 @@ class UR10_Robot:
         '''Close gripper'''
         header = "def myProg():\n"
         end = "end\n"
-        prog = header # first put header into program code 
+        prog = header  # first put header into program code
         prog += 'set_tool_digital_out(0, True)\n'
         prog += 'set_tool_digital_out(1, False)\n'
         prog += 'sleep(0.7)\n'
@@ -96,7 +120,7 @@ class UR10_Robot:
         '''Open gripper'''
         header = "def myProg():\n"
         end = "end\n"
-        prog = header # first put header into program code 
+        prog = header  # first put header into program code
         prog += 'set_tool_digital_out(0, False)\n'
         prog += 'set_tool_digital_out(1, True)\n'
         prog += 'sleep(0.7)\n'
@@ -142,21 +166,27 @@ class UR10_Robot:
             self.rrotate(-3.14/2)'''
 
     def get_on_alt(self, H):
-        '''Getting on global altitude'''
+        """
+        Getting on global altitude
+        :param H: Altitude ig world frame
+        """
         coords = self.get_pose()
         h = coords[2]
         dh = H - h
         self.rtranslate(0, 0, dh)
 
     def stab_xy(self, mask, typ):
-        '''Taking cube from fix alt'''
+        """
+        Stabilize on object
+        :param mask: Color of object
+        :param typ: Type of object, can be 'Cube' or 'Bucket'
+        """
         self.get_on_alt(HG)
-        frame = self.vs.read()
         frame = self.vs.read()
         objects = self.apply_mask(self.detector.get_objects(frame), mask, typ)
         if objects is None and typ == 'Bucket':
             objects = self.apply_mask(self.detector.get_objects(frame), mask, 'Cube')
-            #raise NoObjException('No obj')
+            # raise NoObjException('No obj')
         else:
             try:
                 coords = objects.get_position()
@@ -168,70 +198,81 @@ class UR10_Robot:
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
-                    #coords = objects[0].get_position()
+                    # coords = objects[0].get_position()
                 if self.rec_param == 1:
                     self.rtranslate(0, -0.03, 0)
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
-                    #coords = objects[0].get_position()
+                    # coords = objects[0].get_position()
                 if self.rec_param == 2:
                     self.rtranslate(-0.03, 0, 0)
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
-                    #coords = objects[0].get_position()
+                    # coords = objects[0].get_position()
                 if self.rec_param == 3:
                     self.rtranslate(0, 0.03, 0)
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
-                    #coords = objects[0].get_position()
+                    # coords = objects[0].get_position()
                 if self.rec_param == 4:
                     self.rec_param = 0
                     frame = self.vs.read()
                     objects = self.detector.get_objects(frame)
                     coords = self.detector.stupid_detection(frame)
-                    #coords = objects[0].get_position()
+                    # coords = objects[0].get_position()
                     raise NoObjException('No obj')
                 self.rec_param += 1
                 self.stab_xy(mask, typ)
             dx = X0 - coords[0]
             dy = -(Y0 - coords[1])
-            pic = 0.7*self.calc_transform_coef()
+            pic = 0.7 * self.calc_transform_coef()
             if NROB == 2:
-                    pic = 0.6*self.calc_transform_coef()
-                    if typ == 'Cube':
-                        self.rtranslate(dx/(100*pic), dy/(100*pic), 0)
-                    else:
-                        self.rtranslate(dx/(100*pic) - 0.04, dy/(100*pic), 0)
-            else:
-                print(dx/(100*pic), dy/(100*pic))
+                pic = 0.6 * self.calc_transform_coef()
                 if typ == 'Cube':
-                    self.rtranslate(dx/(100*pic), dy/(100*pic) - 0.01, 0)
+                    self.rtranslate(dx / (100 * pic), dy / (100 * pic), 0)
                 else:
-                    self.rtranslate(dx/(100*pic), dy/(100*pic) - 0.02, 0)
+                    self.rtranslate(dx / (100 * pic) - 0.04, dy / (100 * pic), 0)
+            else:
+                print(dx / (100 * pic), dy / (100 * pic))
+                if typ == 'Cube':
+                    self.rtranslate(dx / (100 * pic), dy / (100 * pic) - 0.01, 0)
+                else:
+                    self.rtranslate(dx / (100 * pic), dy / (100 * pic) - 0.02, 0)
                     print('stv')
             '''if self.check_bucket():
                 self.phi += 3.14/2
                 self.rrotate(3.14/2)'''
 
     def apply_mask(self, objects, mask, typ):
-        '''Applying mask on objects'''
+        """
+        Applying mask on objects
+        :param objects: tuple with all detected objects
+        :param mask: Color of object
+        :param typ: Type of object, can be 'Cube' or 'Bucket'
+        :return: tuple of objects with applied mask
+        """
         for obj in objects:
             if obj.get_color() == mask and obj.__class__.__name__ == typ:
                 return obj
 
     def get_down_center(self, mask, typ):
-        '''going down with focusing on object'''
-        #TEST
+        """
+        Going from current altitude to stab altitude with
+        focusing on object
+        :param mask: Color of object
+        :param typ: Type of object, can be 'Cube' or 'Bucket'
+        """
+        # TEST
         self.get_on_alt(SH)
         Np = 2
         if typ == "Bucket":
             Np = 3
         coords = self.get_pose()
         h = coords[2]
-        dh = (HG - h)/Np
+        dh = (HG - h) / Np
         frame = self.vs.read()
         frame = self.vs.read()
         print(*self.detector.get_objects(frame))
@@ -248,42 +289,47 @@ class UR10_Robot:
                         coords = objects.get_position()
                     except AttributeError:
                         return
-                        break
                 except IndexError:
-                    pic = 0.7*self.calc_transform_coef()
+                    pic = 0.7 * self.calc_transform_coef()
                     self.rtranslate(0, 0, dh)
                     continue
                 dx = W - coords[0]
                 dy = -(H - coords[1])
-                pic = 0.7*self.calc_transform_coef()
+                pic = 0.7 * self.calc_transform_coef()
                 if NROB == 2:
-                    pic = 0.6*self.calc_transform_coef()
+                    pic = 0.6 * self.calc_transform_coef()
                     if typ == 'Cube':
-                        self.rtranslate(dx/(100*pic) - 0.005, dy/(100*pic) - 0.01, dh)
+                        self.rtranslate(dx / (100 * pic) - 0.005, dy / (100 * pic) - 0.01, dh)
                     else:
-                        self.rtranslate(dx/(100*pic) - 0.015, dy/(100*pic) + 0.05, dh)
+                        self.rtranslate(dx / (100 * pic) - 0.015, dy / (100 * pic) + 0.05, dh)
                 else:
-                    print(dx/(100*pic), dy/(100*pic))
+                    print(dx / (100 * pic), dy / (100 * pic))
                     print(dx, dy)
                     if typ == 'Cube':
-                        self.rtranslate(dx/(100*pic) - 0.01, dy/(100*pic), dh)
+                        self.rtranslate(dx / (100 * pic) - 0.01, dy / (100 * pic), dh)
                     else:
-                        self.rtranslate(dx/(100*pic), dy/(100*pic), dh)
-                    
+                        self.rtranslate(dx / (100 * pic), dy / (100 * pic), dh)
 
     def check_existance(self, objects, objn):
-        '''Checking existance in current map obj'''
+        """
+        This function can check existance of object in current map
+        When object was previously detected, info abut type and color
+        can be updated
+        :param objects: tuple of objects
+        :param objn: current object
+        :return: True or False
+        """
         pos1 = objn.get_position()
         epos = self.get_pose()
         for i in range(len(objects)):
             pos = objects[i].get_position()
             if abs(pos[0] - pos1[0]) <= 0.1 and abs(pos[1] - pos1[1]) <= 0.1:
-                #obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
+                # obj.set_position([(pos[0] + pos1[0])/2, (pos[1] + pos1[1])/2])
                 if objn.__class__.__name__ == 'Bucket':
                     print("object replaced", objects[i], objn)
                     objects[i] = objn
                 objn.calc_distance(epos)
-                #changing color, if distance is smaller
+                # changing color, if distance is smaller
                 if objn.distance <= objects[i].distance:
                     print("color replaced", objects[i], objn)
                     objects[i].color = objn.color
@@ -291,7 +337,7 @@ class UR10_Robot:
         return False
 
     def check_bucket(self):
-        '''Check if needs to turn end-effector'''
+        """Check if needs to turn end-effector"""
         frame = self.vs.read()
         frame = self.vs.read()
         objects = self.detector.get_objects(frame)
@@ -300,12 +346,10 @@ class UR10_Robot:
                 return True
         return False
 
-
     def make_map(self):
-        '''Constructing map
-        This function addes object to buil-in variable map'''
+        """Constructing map
+        This function addes object to buil-in variable map"""
         self.get_on_alt(SH)
-        frame = self.vs.read()
         frame = self.vs.read()
         objects = self.detector.get_objects(frame)
         print(*objects)
@@ -313,22 +357,28 @@ class UR10_Robot:
             coords = obj.get_position()
             dx = W - coords[0]
             dy = -(H - coords[1])
-            pic = 1.08*self.calc_transform_coef()*2
+            pic = 1.08 * self.calc_transform_coef() * 2
             bco = self.get_pose()
-            dx /= 100*pic
-            dy /= 100*pic
+            dx /= 100 * pic
+            dy /= 100 * pic
             if obj.__class__.__name__ == 'Bucket':
-                a = Bucket([bco[0]+dx, bco[1]+dy], obj.get_color(), obj.get_radius())
+                a = Bucket([bco[0] + dx, bco[1] + dy], obj.get_color(), obj.get_radius())
             else:
-                a = Cube([bco[0]+dx, bco[1]+dy], obj.get_color())
-            print(bco[0]+dx, bco[1]+dy)
+                a = Cube([bco[0] + dx, bco[1] + dy], obj.get_color())
+            print(bco[0] + dx, bco[1] + dy)
             if not self.check_existance(self.TO, a):
                 print('Added new object')
                 a.calc_distance(bco)
                 self.TO.append(a)
 
     def translate(self, x, y, z, zr=True):
-        '''Moving in global Frame'''
+        """
+        Moving in global Frame
+        :param x: x coordinate
+        :param y: y coordinate
+        :param z: z coordinate
+        :param zr: if is True current altitude will be not changed
+        """
         coord = self.get_pose()
         if not zr:
             self.rtranslate(x - coord[0], y - coord[1], z - coord[2])
@@ -336,7 +386,7 @@ class UR10_Robot:
             self.rtranslate(x - coord[0], y - coord[1], 0)
 
     def construct_map(self):
-        '''Constructing map'''
+        """Constructing map"""
         self.translate(0.11022135615486867, -0.5455495045770956, 0.7135153738252198, zr=False)
         self.vel = 1
         self.make_map()
@@ -345,32 +395,38 @@ class UR10_Robot:
         N_points = 4
         self.make_map()
         for i in range(N_points):
-            self.rtranslate(-2*dist/N_points, 0, 0)
+            self.rtranslate(-2 * dist / N_points, 0, 0)
             self.make_map()
         self.rtranslate(0, -0.2, 0)
         self.make_map()
         for i in range(N_points):
-            self.rtranslate(2*dist/N_points, 0, 0)
+            self.rtranslate(2 * dist / N_points, 0, 0)
             self.make_map()
         self.vel = 0.2
         self.rtranslate(-dist, 0, 0)
 
     def take_cube(self, cube):
-        '''Takes cube object from ground,
-        works with random altitude'''
+        """
+        Takes cube object from ground,
+        works with random altitude
+        :param cube: cube object
+        """
         pos = cube.get_position()
-        #self.translate(pos[0], pos[1]+COFF, 0)
+        # self.translate(pos[0], pos[1]+COFF, 0)
         self.translate(pos[0], pos[1], 0)
         self.gr_open()
         self.get_down_center(cube.get_color(), 'Cube')
-        #Needs to calibrate hand angle
+        # Needs to calibrate hand angle
         self.stab_xy(cube.get_color(), 'Cube')
         self.take_object()
         print("object taken")
 
     def get_color_objects(self, color):
-        '''Return array with objects, 
-        sorted by type, color'''
+        """
+        Return array with objects,
+        sorted by type, color
+        :param color: sorted by color objects
+        """
         pos = self.get_pose()
         targets = []
         for obj in self.TO:
@@ -381,20 +437,27 @@ class UR10_Robot:
             if obj.__class__.__name__ == 'Bucket' and color == obj.get_color():
                 targets.append(obj)
         if targets[-1].__class__.__name__ != "Bucket":
-            #raise NoBucketException('No bucket detected')
+            # raise NoBucketException('No bucket detected')
             pass
         return self.min_dist(targets)
 
     def min_dist(self, targets):
-        '''This function are for calculating minimal distance'''
+        """
+        This function are for calculating minimal distance
+        :param targets: sorted objects by minimal distane
+        :return: sorted tuple
+        """
         last_bucket = targets[-1]
         del targets[-1]
-        targets.sort(key = lambda x: x.distance)
+        targets.sort(key=lambda x: x.distance)
         targets.append(last_bucket)
         return targets
-     
+
     def take_all_cubes(self, color):
-        '''This function takes all cubes on field'''
+        """
+        Needs to solve main problem — take all cubes from field
+        :param color: color of cubes
+        """
         obj = self.get_color_objects(color)
         bpos = obj[-1].get_position()
         count = len(obj) - 1
@@ -405,7 +468,7 @@ class UR10_Robot:
             except NoObjException:
                 print('No cube found on this coords', obj[i].get_position())
                 continue
-            #self.translate(bpos[0], bpos[1]+COFF, 0)
+            # self.translate(bpos[0], bpos[1]+COFF, 0)
             self.translate(bpos[0], bpos[1], 0)
             self.get_down_center(color, 'Bucket')
             self.stab_xy(color, 'Bucket')
